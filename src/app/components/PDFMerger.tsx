@@ -8,7 +8,6 @@ import { useDropzone } from "react-dropzone";
 import { ArrowDownTray, ArrowsUpDown, DocumentPlus, TrashIcon, XMarkIcon } from "./Icons";
 import * as pdfjs from 'pdfjs-dist';
 
-// Initialize PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PDFFile {
@@ -131,30 +130,25 @@ export default function PDFMerger() {
           // Create thumbnail
           let thumbnail;
           try {
-            // Use PDF.js to render the first page as an image
             const pdfData = new Uint8Array(data);
             const loadingTask = pdfjs.getDocument(pdfData);
             const pdf = await loadingTask.promise;
             
             if (pdf.numPages > 0) {
-              const page = await pdf.getPage(1); // Get the first page
+              const page = await pdf.getPage(1);
               
-              // Scale the page to a reasonable thumbnail size
               const viewport = page.getViewport({ scale: 0.5 });
               
-              // Prepare canvas for rendering
               const canvas = document.createElement("canvas");
               const context = canvas.getContext("2d");
               canvas.height = viewport.height;
               canvas.width = viewport.width;
               
-              // Render the page to the canvas
               await page.render({
                 canvasContext: context!,
                 viewport: viewport
               }).promise;
               
-              // Convert canvas to data URL
               thumbnail = canvas.toDataURL("image/png");
             }
           } catch (error) {
@@ -245,7 +239,6 @@ export default function PDFMerger() {
       
       const mergedPdfBytes = await mergedPdf.save();
       
-      // Create download link
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -277,16 +270,13 @@ export default function PDFMerger() {
     try {
       const formData = new FormData();
       
-      // Add each file to the form data
       files.forEach(file => {
         const blob = new Blob([file.data], { type: 'application/pdf' });
         formData.append('files', blob, file.name);
       });
       
-      // Add the desired file name
       formData.append('fileName', mergedFileName);
       
-      // Send request to server
       const response = await fetch('/api/merge-pdfs', {
         method: 'POST',
         body: formData,
@@ -297,10 +287,8 @@ export default function PDFMerger() {
         throw new Error(errorData.error || 'Server error');
       }
       
-      // Get the blob from the response
       const blob = await response.blob();
       
-      // Create a download link
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
